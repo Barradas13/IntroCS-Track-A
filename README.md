@@ -124,3 +124,297 @@ Gate: The "key" that controls the flow.
 When you apply a small voltage (electrical pressure) to the Gate, it acts like you squeezing the hose—it opens a bridge inside the transistor, allowing electricity to flow freely from the Source to the Drain.
 
 When you remove the voltage from the Gate, the bridge closes, and electricity stops flowing.
+# Class 3 — 14/09/2026
+
+## Analog Signals
+
+Analog signals represent information continuously, so they can theoretically contain infinite information. Computers cannot store continuous signals exactly, so they store an approximation.
+
+$$
+\text{Analog} \rightarrow \text{Digital}
+$$
+
+1. **Encode:** convert analog information into digital form.
+2. **Compress:** reduce the bit rate while preserving useful information.
+
+---
+
+## Representing Negative Integers
+
+For signed integers, we use **two's complement**.
+
+To obtain \(-x\):
+
+1. Write \(x\) in binary.
+2. Invert all bits.
+3. Add \(1\).
+
+Example:
+
+$$
+4=00000100
+$$
+
+$$
+\sim4=11111011
+$$
+
+$$
+11111011+1=11111100=-4
+$$
+
+Two's complement avoids having separate \(+0\) and \(-0\), and allows ordinary binary addition to work for signed numbers.
+
+With \(8\) bits:
+
+$$
+2^8=256\text{ possible values}
+$$
+
+so the range is
+
+$$
+\boxed{-128\leq x\leq127}
+$$
+
+In general, with \(n\) bits:
+
+$$
+\boxed{-2^{n-1}\leq x\leq2^{n-1}-1}
+$$
+
+---
+
+## Digitalizing Real Numbers
+
+Real numbers cannot all be represented exactly using a finite number of bits. We therefore use **floating-point representation**, based on binary scientific notation:
+
+$$
+1.xxxxx_2\times2^e
+$$
+
+For example:
+
+$$
+3.14\approx1.1001000\ldots_2\times2^1
+$$
+
+### IEEE 754 — 32-bit Float
+
+A 32-bit floating-point number consists of:
+
+$$
+\boxed{1\text{ sign bit}+8\text{ exponent bits}+23\text{ fraction bits}}
+$$
+
+$$
+\underbrace{S}_{1}
+\quad
+\underbrace{EEEEEEEE}_{8}
+\quad
+\underbrace{FFFFFFFFFFFFFFFFFFFFFFF}_{23}
+$$
+
+### Sign
+
+$$
+S=0\rightarrow+
+$$
+
+$$
+S=1\rightarrow-
+$$
+
+### Exponent
+
+The exponent uses a **bias of 127**:
+
+$$
+E=e+127
+$$
+
+### For example
+
+
+For a **32-bit IEEE 754 float**, we don't simply keep 32 binary digits of \(33.2132\). We first convert it to binary, then **normalize** it and keep **23 fraction bits**.
+
+Starting with:
+
+$$
+33.2132_{10}
+$$
+
+We already have:
+
+$$
+33_{10}=100001_2
+$$
+
+For the fractional part:
+
+$$
+0.2132_{10}=0.001101101001010001000110011100\ldots_2
+$$
+
+Therefore:
+
+$$
+33.2132_{10}
+=
+100001.001101101001010001000110011100\ldots_2
+$$
+
+Normalize:
+
+$$
+\boxed{
+1.000010011011010010100010001100111\ldots_2
+\times2^5
+}
+$$
+
+Now IEEE 754 single precision uses:
+
+* **Sign:** \(0\)
+* **Exponent:** \(5+127=132=10000100_2\)
+* **Fraction:** first 23 bits after the leading \(1\)
+
+$$
+\text{Fraction}=00001001101101001010001
+$$
+
+Thus the **32-bit representation** is:
+
+$$
+\boxed{
+0\;10000100\;00001001101101001010001
+}
+$$
+
+or without spaces:
+
+$$
+\boxed{01000010000001001101101001010001}
+$$
+
+So \(33.2132\) is stored approximately as that 32-bit pattern.
+
+### Fraction
+
+For normalized numbers, the leading \(1\) is implicit:
+
+$$
+1.xxxxx_2
+$$
+
+so only the bits after the binary point are stored.
+
+---
+
+## Precision and Range
+
+The two main limitations of floating-point representation are:
+
+$$
+\boxed{\text{Fraction}\rightarrow\text{precision}}
+$$
+
+$$
+\boxed{\text{Exponent}\rightarrow\text{range}}
+$$
+
+Some decimal numbers, such as \(0.1\), cannot be represented exactly in binary, so floating-point calculations involve approximations and rounding.
+
+---
+
+## Overflow and Underflow
+
+**Overflow:** the value is too large to be represented.
+
+**Underflow:** the value is too close to zero to be represented normally.
+
+IEEE 754 also defines special values such as:
+
+$$
++\infty,\quad-\infty,\quad\mathrm{NaN}
+$$
+
+---
+
+## Ariane 5
+
+The Ariane 5 Flight 501 failure is a famous example of a numerical overflow problem.
+
+A value was converted from a 64-bit floating-point number to a 16-bit signed integer, but the value was too large for the integer representation. This caused an overflow and ultimately contributed to the failure of the rocket's guidance system.
+
+$$
+\boxed{\text{Bad numerical representation}
+\rightarrow
+\text{Overflow}
+\rightarrow
+\text{System failure}}
+$$
+
+---
+
+## Main Idea
+
+Computers represent real-world information using a **finite number of bits**.
+
+Therefore, every representation has limitations involving:
+
+$$
+\boxed{\text{Precision, Range, and Storage}}
+$$
+
+
+## Digitilizing Audio
+
+![alt text](image-3.png)
+
+
+# Data Compression — Short Explanation
+
+**Data compression** = reducing the number of bits needed to store or send data.
+
+---
+
+## String Example (Lossless)
+
+**Original:** `AAAAABBBBBCCCCCDDDDD` (20 chars = 160 bits)
+
+**Compressed (Run-Length Encoding):** `5A5B5C5D` (8 bytes = 64 bits)
+
+**Lossless** — exact reconstruction. Ratio ≈ **2.5:1**
+
+---
+
+## Video Example (Lossy)
+
+**Raw 1080p @ 30fps:** ~1.5 Gbps (~186 MB/sec) — impossible to stream.
+
+**Compressed (H.264):** ~20 Mbps → **~75:1 ratio**
+
+**How?** Three tricks:
+1. **Spatial** — compress each frame like a JPEG
+2. **Temporal** — store only *changes* between frames (I, P, B frames)
+3. **Perceptual** — throw away details the eye can't see
+
+**Lossy** — approximate, but visually fine.
+
+---
+
+## Key Difference
+
+| | Lossless | Lossy |
+|---|---|---|
+| Reversible? | Yes | No |
+| Ratio | 2:1 – 10:1 | 10:1 – 200:1 |
+| Used for | Text, ZIP, PNG, FLAC | JPEG, MP3, MP4 |
+
+---
+
+## One-Liner
+
+> **String:** `AAAAABBBBB` → `5A5B` (exact, small win).
+> **Video:** Store one full frame, then only the **changes** → huge win, tiny quality loss.
